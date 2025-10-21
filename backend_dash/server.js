@@ -12,6 +12,9 @@ require('dotenv').config();
 const connectMongoDB = require('./config/mongo');
 const { connectNeonDB } = require('./config/neon');
 
+// Import models
+const Website = require('./models/Website');
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const collectRoutes = require('./routes/collect');
@@ -27,9 +30,45 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(compression());
 
-// CORS configuration
+// Dynamic CORS configuration - checks database for registered domains
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: async function (origin, callback) {
+    try {
+      // Always allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+
+      // Always allow localhost and dashboard frontend for development/admin
+      const staticAllowed = [
+        'http://localhost:3000',
+        'http://localhost:3001', 
+        'https://analytics-dashboard-frontend-wine.vercel.app'
+      ];
+      
+      if (staticAllowed.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Check if origin matches any registered website domain
+      const registeredWebsites = await Website.getAllDomains();
+      const isRegistered = registeredWebsites.some(site => {
+        const siteOrigin = site.domain.startsWith('http') ? site.domain : `https://${site.domain}`;
+        return siteOrigin === origin || site.domain === origin;
+      });
+
+      if (isRegistered) {
+        console.log('✅ CORS allowed for registered domain:', origin);
+        return callback(null, true);
+      } else {
+        console.log('❌ CORS blocked unregistered domain:', origin);
+        return callback(new Error('Domain not registered in analytics platform'));
+      }
+
+    } catch (error) {
+      console.error('CORS check error:', error);
+      // Allow on error to prevent breaking existing functionality
+      return callback(null, true);
+    }
+  },
   credentials: true
 }));
 
