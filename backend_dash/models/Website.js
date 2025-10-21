@@ -124,6 +124,18 @@ class Website {
     
     return result.length > 0;
   }
+
+  // Get all registered domains for CORS checking
+  static async getAllDomains() {
+    const { sql } = getNeonDB();
+    
+    const result = await sql`
+      SELECT DISTINCT domain FROM websites 
+      WHERE is_active = true AND domain IS NOT NULL AND domain != ''
+    `;
+    
+    return result;
+  }
 }
 
 module.exports = Website;
