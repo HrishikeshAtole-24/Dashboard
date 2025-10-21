@@ -29,7 +29,7 @@ export default function DebugAPI() {
     },
     {
       name: 'Test Tracking Script',
-      test: () => testAPI('tracking', () => fetch('http://localhost:5000/tracking/script.js').then(r => r.text()))
+      test: () => testAPI('tracking', () => fetch(`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://dashboard-backend-twj7.onrender.com'}/tracking/script.js`).then(r => r.text()))
     }
   ];
 
