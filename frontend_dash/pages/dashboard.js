@@ -79,9 +79,10 @@ export default function Dashboard() {
       if (response.success && response.data.length > 0) {
         console.log('Websites data:', response.data); // Debug log
         setWebsites(response.data);
-        // Try both _id and id fields
+        // Use website_id (tracking ID) instead of database ID
         const firstWebsite = response.data[0];
-        const websiteId = firstWebsite._id || firstWebsite.id;
+        const websiteId = firstWebsite.website_id; // This is the tracking ID like "web_mh0j26qzc224338g7lt"
+        console.log('Selected website ID:', websiteId);
         setSelectedWebsite(websiteId);
       } else {
         setWebsites([]);
@@ -238,7 +239,7 @@ export default function Dashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-64 justify-between text-gray-900">
                     {selectedWebsite ? 
-                      `${websites.find(w => (w._id || w.id) === selectedWebsite)?.name} (${websites.find(w => (w._id || w.id) === selectedWebsite)?.domain})` : 
+                      `${websites.find(w => w.website_id === selectedWebsite)?.name} (${websites.find(w => w.website_id === selectedWebsite)?.domain})` : 
                       "Select Website"
                     }
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -247,8 +248,8 @@ export default function Dashboard() {
                 <DropdownMenuContent className="w-64">
                   {websites.map((website) => (
                     <DropdownMenuItem
-                      key={website._id || website.id}
-                      onClick={() => setSelectedWebsite(website._id || website.id)}
+                      key={website.website_id}
+                      onClick={() => setSelectedWebsite(website.website_id)}
                     >
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-900">{website.name}</span>

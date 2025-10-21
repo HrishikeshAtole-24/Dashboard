@@ -317,4 +317,51 @@ router.get('/:websiteId/realtime', authMiddleware, async (req, res) => {
   }
 });
 
+// Manual aggregation trigger for real-time dashboard updates
+router.post('/:websiteId/aggregate', authMiddleware, async (req, res) => {
+  try {
+    const { websiteId } = req.params;
+    
+    // Check if user owns this website
+    const hasAccess = await Website.checkOwnership(websiteId, req.user.id);
+    if (!hasAccess) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Import aggregation job
+    const AggregationJob = require('../cron/aggregateJob');
+    const aggregator = new AggregationJob();
+    
+    // Run aggregation for today and yesterday
+    const today = new Date();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    // Set up date ranges
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(today);
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    const yesterdayStart = new Date(yesterday);
+    yesterdayStart.setHours(0, 0, 0, 0);
+    const yesterdayEnd = new Date(yesterday);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+    
+    await aggregator.aggregateWebsiteData(websiteId, today.toISOString().split('T')[0], todayStart, todayEnd);
+    await aggregator.aggregateWebsiteData(websiteId, yesterday.toISOString().split('T')[0], yesterdayStart, yesterdayEnd);
+    
+    res.json({ 
+      message: 'Data aggregation completed',
+      processedDates: [
+        today.toISOString().split('T')[0],
+        yesterday.toISOString().split('T')[0]
+      ]
+    });
+    
+  } catch (error) {
+    console.error('Manual aggregation error:', error);
+    res.status(500).json({ message: 'Failed to run aggregation' });
+  }
+});
+
 module.exports = router;
