@@ -156,8 +156,14 @@ router.get('/:websiteId/overview', authMiddleware, [
     const days = parseInt(req.query.days) || 30;
 
     // Check if user owns this website
+    console.log(`Checking ownership: websiteId=${websiteId}, userId=${req.user.id}`);
     const hasAccess = await Website.checkOwnership(websiteId, req.user.id);
+    console.log(`Access check result: ${hasAccess}`);
+    
     if (!hasAccess) {
+      // Debug: Show user's websites
+      const userWebsites = await Website.findByUserId(req.user.id);
+      console.log('User websites:', userWebsites.map(w => ({ id: w.id, website_id: w.website_id, domain: w.domain })));
       return res.status(403).json({ message: 'Access denied' });
     }
 

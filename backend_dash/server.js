@@ -27,7 +27,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resources
+  crossOriginEmbedderPolicy: false // Disable COEP for tracking scripts
+}));
 app.use(compression());
 
 // Dynamic CORS configuration - checks database for registered domains
@@ -138,8 +141,12 @@ app.get('/tracking/script.js', (req, res) => {
     const scriptPath = path.join(__dirname, '../tracking-script/track.js');
     const scriptContent = fs.readFileSync(scriptPath, 'utf8');
     
+    // Set headers for cross-origin script loading
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for tracking script
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // Fix CORP blocking
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
     res.send(scriptContent);
   } catch (error) {
     console.error('Error serving tracking script:', error);
