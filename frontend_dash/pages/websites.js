@@ -108,11 +108,12 @@ export default function Websites() {
   };
 
   const copyTrackingCode = (trackingId, domain) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://dashboard-backend-twj7.onrender.com';
     const trackingCode = `<!-- Analytics Tracking Script -->
 <script>
 (function() {
   var script = document.createElement('script');
-  script.src = 'http://localhost:5000/tracking/script.js';
+  script.src = '${apiUrl}/tracking/script.js';
   script.setAttribute('data-website-id', '${trackingId}');
   script.async = true;
   document.head.appendChild(script);

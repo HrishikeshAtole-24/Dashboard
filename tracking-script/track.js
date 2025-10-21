@@ -3,7 +3,7 @@
 
   // Configuration
   const CONFIG = {
-    apiUrl: 'http://localhost:5000/api/collect', // This will work with your local backend
+    apiUrl: 'https://dashboard-backend-twj7.onrender.com/api/collect', // Production backend URL
     debug: true, // Set to true for testing
     batchSize: 10,
     batchTimeout: 5000, // 5 seconds
