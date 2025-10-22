@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../components/DashboardLayout';
+import ModernLayout from '../components/ModernLayout';
 import { 
   Card, 
   MetricCard, 
@@ -164,20 +164,20 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Dashboard">
+      <ModernLayout title="Dashboard">
         <div className="space-y-8">
           <StatsGrid>
             {[1,2,3,4].map(i => <LoadingCard key={i} />)}
           </StatsGrid>
           <LoadingCard />
         </div>
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   if (!websites.length) {
     return (
-      <DashboardLayout title="Dashboard">
+      <ModernLayout title="Dashboard">
         <EmptyState
           icon={<GlobeAltIcon className="w-10 h-10" />}
           title="No Websites Found"
@@ -189,12 +189,12 @@ export default function Dashboard() {
             </Button>
           }
         />
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Dashboard">
+    <ModernLayout title="Dashboard">
       <div className="space-y-8">
         {/* Welcome Section */}
         <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
@@ -371,6 +371,6 @@ export default function Dashboard() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </ModernLayout>
   );
 }

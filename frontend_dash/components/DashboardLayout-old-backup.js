@@ -24,7 +24,7 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: CogIcon },
 ];
 
-export default function DashboardLayout({ children, title = 'Dashboard', hideHeader = false }) {
+export default function ModernLayout({ children, title = 'Dashboard', hideHeader = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();

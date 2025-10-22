@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../components/DashboardLayout';
+import ModernLayout from '../components/ModernLayout';
 import { 
   Card, 
   SectionHeader, 
@@ -104,17 +104,17 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Profile">
+      <ModernLayout title="Profile">
         <div className="space-y-8">
           <LoadingCard />
           <LoadingCard />
         </div>
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Profile">
+    <ModernLayout title="Profile">
       <div className="space-y-8">
         {/* Profile Header */}
         <Card>
@@ -333,6 +333,6 @@ export default function Profile() {
           </div>
         </Card>
       </div>
-    </DashboardLayout>
+    </ModernLayout>
   );
 }

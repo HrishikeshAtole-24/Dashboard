@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../components/DashboardLayout';
+import ModernLayout from '../components/ModernLayout';
 import { 
   Card, 
   MetricCard, 
@@ -106,20 +106,20 @@ export default function Realtime() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Real-time">
+      <ModernLayout title="Real-time">
         <div className="space-y-8">
           <LoadingCard />
           <StatsGrid>
             {[1,2,3,4].map(i => <LoadingCard key={i} />)}
           </StatsGrid>
         </div>
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   if (!websites.length) {
     return (
-      <DashboardLayout title="Real-time">
+      <ModernLayout title="Real-time">
         <EmptyState
           icon={<UsersIcon className="w-12 h-12" />}
           title="No Websites Found"
@@ -130,12 +130,12 @@ export default function Realtime() {
             </Button>
           }
         />
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Real-time">
+    <ModernLayout title="Real-time">
       <div className="space-y-8">
         {/* Header & Controls */}
         <Card>
@@ -378,6 +378,6 @@ export default function Realtime() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </ModernLayout>
   );
 }

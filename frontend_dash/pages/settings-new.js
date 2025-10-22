@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../components/DashboardLayout';
+import ModernLayout from '../components/ModernLayout';
 import { 
   Card, 
   SectionHeader, 
@@ -82,17 +82,17 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Settings">
+      <ModernLayout title="Settings">
         <div className="space-y-8">
           <LoadingCard />
           <LoadingCard />
         </div>
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Settings">
+    <ModernLayout title="Settings">
       <div className="space-y-8">
         {/* Header */}
         <Card>
@@ -140,7 +140,7 @@ export default function Settings() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </ModernLayout>
   );
 }
 

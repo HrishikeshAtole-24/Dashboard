@@ -1,0 +1,199 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Basic Tailwind CSS imports */
+@tailwind base;
+@tailwind components;  
+@tailwind utilities;
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
+  color: #111827;
+  line-height: 1.6;
+}
+
+/* Remove default button styles */
+button {
+  font-family: inherit;
+}
+
+/* Remove default input styles */
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Link styles */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Custom scrollbar for WebKit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Loading animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Highcharts custom styles */
+.highcharts-container {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.highcharts-credits {
+  display: none !important;
+}
+
+.highcharts-tooltip {
+  font-size: 12px !important;
+}
+
+/* React Hot Toast custom styles */
+div[data-react-hot-toast] {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Utility classes */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+td {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Form element improvements */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+select,
+textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Better button hover states */
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Smooth transitions for interactive elements */
+button, input, select, textarea, a {
+  transition: all 0.2s ease;
+}
+
+/* Disabled state for form elements */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

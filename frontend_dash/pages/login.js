@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '../components/icons';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -49,21 +49,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
               create a new account
             </Link>
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg">
+        <div className="card">
+          <div className="card-body">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="form-label">
@@ -107,9 +108,9 @@ export default function Login() {
                   disabled={loading}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="icon text-gray-400 hover:text-gray-600" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="icon text-gray-400 hover:text-gray-600" />
                   )}
                 </button>
               </div>
@@ -117,7 +118,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
                   Forgot your password?
                 </Link>
               </div>
@@ -127,7 +128,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full btn-primary ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`btn btn-primary w-full ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -147,7 +148,7 @@ export default function Login() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t" style={{ borderColor: 'var(--gray-300)' }} />
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">New to Analytics Dashboard?</span>
@@ -157,15 +158,16 @@ export default function Login() {
             <div className="mt-6">
               <Link
                 href="/register"
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="btn btn-secondary w-full flex justify-center"
               >
                 Create your account
               </Link>
             </div>
           </div>
+          </div>
         </div>
 
-        <div className="text-center">
+        <div className="text-center mt-6">
           <Link
             href="/"
             className="text-sm text-gray-600 hover:text-gray-800 transition-colors"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../components/DashboardLayout';
+import ModernLayout from '../components/ModernLayout';
 import { 
   Card, 
   SectionHeader, 
@@ -121,19 +121,19 @@ export default function Websites() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Websites">
+      <ModernLayout title="Websites">
         <div className="space-y-6">
           <LoadingCard />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1,2,3].map(i => <LoadingCard key={i} />)}
           </div>
         </div>
-      </DashboardLayout>
+      </ModernLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Websites">
+    <ModernLayout title="Websites">
       <div className="space-y-8">
         {/* Header */}
         <Card>
@@ -287,7 +287,7 @@ export default function Websites() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </ModernLayout>
   );
 }
 

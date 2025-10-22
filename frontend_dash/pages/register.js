@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '../components/icons';
 import toast from 'react-hot-toast';
 
 export default function Register() {
@@ -85,22 +85,22 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="auth-page">
+      <div className="auth-container">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="auth-title">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="auth-subtitle">
             Or{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/login" className="link">
               sign in to your existing account
             </Link>
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="auth-form-card">
+          <form className="auth-form" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="name" className="form-label">
                 Full name
@@ -141,14 +141,14 @@ export default function Register() {
               <label htmlFor="password" className="form-label">
                 Password
               </label>
-              <div className="relative">
+              <div className="password-input-container">
                 <input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
-                  className="form-input pr-10"
+                  className="form-input"
                   placeholder="Create a password"
                   value={formData.password}
                   onChange={handleChange}
@@ -156,25 +156,25 @@ export default function Register() {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="icon" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="icon" />
                   )}
                 </button>
               </div>
               {formData.password && (
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-600">Password requirements:</p>
+                <div className="password-requirements">
+                  <p className="requirements-title">Password requirements:</p>
                   {['At least 8 characters', 'One uppercase letter', 'One lowercase letter', 'One number', 'One special character'].map((req, index) => {
                     const isValid = !passwordErrors.includes(req);
                     return (
-                      <div key={index} className={`text-xs flex items-center ${isValid ? 'text-green-600' : 'text-red-500'}`}>
-                        <span className="mr-1">{isValid ? '✓' : '✗'}</span>
+                      <div key={index} className={`requirement-item ${isValid ? 'valid' : 'invalid'}`}>
+                        <span className="requirement-icon">{isValid ? '✓' : '✗'}</span>
                         {req}
                       </div>
                     );
@@ -187,14 +187,14 @@ export default function Register() {
               <label htmlFor="confirmPassword" className="form-label">
                 Confirm password
               </label>
-              <div className="relative">
+              <div className="password-input-container">
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
-                  className="form-input pr-10"
+                  className="form-input"
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
@@ -202,38 +202,38 @@ export default function Register() {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="password-toggle-btn"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={loading}
                 >
                   {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeSlashIcon className="icon" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeIcon className="icon" />
                   )}
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
+                <p className="error-text">Passwords do not match</p>
               )}
             </div>
 
-            <div className="flex items-center">
+            <div className="checkbox-group">
               <input
                 id="terms"
                 name="terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="form-checkbox"
                 disabled={loading}
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="terms" className="checkbox-label">
                 I agree to the{' '}
-                <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+                <Link href="/terms" className="link">
                   Terms of Service
                 </Link>
                 {' '}and{' '}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+                <Link href="/privacy" className="link">
                   Privacy Policy
                 </Link>
               </label>
@@ -243,10 +243,10 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading || passwordErrors.length > 0}
-                className={`w-full btn-primary ${(loading || passwordErrors.length > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`btn-primary full-width ${(loading || passwordErrors.length > 0) ? 'disabled' : ''}`}
               >
                 {loading ? (
-                  <div className="flex items-center justify-center">
+                  <div className="loading-container">
                     <div className="loading-dots">
                       <div></div>
                       <div></div>
@@ -260,20 +260,18 @@ export default function Register() {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
+          <div className="auth-divider-section">
+            <div className="divider">
+              <div className="divider-line"></div>
+              <div className="divider-text">
+                <span>Already have an account?</span>
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="secondary-action">
               <Link
                 href="/login"
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="btn-secondary full-width"
               >
                 Sign in instead
               </Link>
@@ -281,10 +279,10 @@ export default function Register() {
           </div>
         </div>
 
-        <div className="text-center">
+        <div className="back-link">
           <Link
             href="/"
-            className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            className="link-subtle"
           >
             ← Back to home
           </Link>
