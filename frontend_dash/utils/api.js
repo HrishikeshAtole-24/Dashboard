@@ -65,6 +65,27 @@ export const authAPI = {
 
 // Website API
 export const websiteAPI = {
+  getWebsites: async () => {
+    const response = await api.get('/dashboard/websites');
+    return response.data;
+  },
+
+  addWebsite: async (websiteData) => {
+    const response = await api.post('/dashboard/websites', websiteData);
+    return response.data;
+  },
+
+  updateWebsite: async (id, websiteData) => {
+    const response = await api.put(`/dashboard/websites/${id}`, websiteData);
+    return response.data;
+  },
+
+  deleteWebsite: async (id) => {
+    const response = await api.delete(`/dashboard/websites/${id}`);
+    return response.data;
+  },
+
+  // Legacy compatibility methods
   getAll: async () => {
     const response = await api.get('/dashboard/websites');
     return { success: true, data: response.data.websites || [] };
@@ -100,6 +121,16 @@ export const analyticsAPI = {
 
   getTopPages: async (websiteId, days = 30) => {
     const response = await api.get(`/dashboard/${websiteId}/top-pages?days=${days}`);
+    return response.data;
+  },
+
+  getTechnologyAnalytics: async (websiteId, days = 30) => {
+    const response = await api.get(`/dashboard/${websiteId}/technology?days=${days}`);
+    return response.data;
+  },
+
+  getReferrerAnalytics: async (websiteId, days = 30, limit = 10) => {
+    const response = await api.get(`/dashboard/${websiteId}/referrers?days=${days}&limit=${limit}`);
     return response.data;
   },
 

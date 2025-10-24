@@ -1,91 +1,78 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
-import { 
-  Card, 
-  SectionHeader, 
-  Button, 
-  LoadingCard,
-  Badge
-} from '../components/UIComponents';
-import { useRouter } from 'next/router';
-import {
-  CogIcon,
-  BellIcon,
-  ShieldCheckIcon,
-  EyeIcon,
-  ClockIcon,
-  TrashIcon,
-  CheckCircleIcon,
-  XCircleIcon
-} from '../components/icons';
-import toast from 'react-hot-toast';
 
 export default function Settings() {
-  const { isAuthenticated, loading } = useAuth();
-  const router = useRouter();
   const [settings, setSettings] = useState({
-    notifications: {
-      emailReports: true,
-      weeklyDigest: true,
-      alertThreshold: true,
-      realTimeAlerts: false
-    },
-    privacy: {
-      trackingEnabled: true,
-      shareData: false,
-      anonymizeIPs: true,
-      dataRetention: '12'
-    },
-    preferences: {
-      timezone: 'UTC',
-      dateFormat: 'MM/DD/YYYY',
-      currency: 'USD',
-      language: 'en'
-    }
+    // Dashboard Settings
+    theme: 'dark',
+    defaultTimeframe: '30',
+    autoRefresh: true,
+    refreshInterval: '30',
+    dateFormat: 'MM/DD/YYYY',
+    
+    // Notification Settings
+    emailNotifications: true,
+    weeklyReports: true,
+    monthlyReports: true,
+    alertThresholds: true,
+    realTimeAlerts: false,
+    
+    // Privacy Settings
+    dataRetention: '365',
+    anonymizeIPs: true,
+    cookieConsent: true,
+    shareAnalytics: false,
+    
+    // API Settings
+    apiEnabled: true,
+    apiRateLimit: '1000',
+    webhookUrl: ''
   });
-  const [activeSection, setActiveSection] = useState('notifications');
 
-  // Authentication check
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, loading, router]);
+    loadSettings();
+  }, []);
 
-  const handleSettingChange = (section, key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [key]: value
-      }
-    }));
-  };
-
-  const saveSettings = async () => {
+  const loadSettings = async () => {
     try {
-      // Here you would typically call an API to save settings
-      // await settingsAPI.updateSettings(settings);
-      toast.success('Settings saved successfully');
+      setLoading(true);
+      // Mock settings loading
+      // In real app, load from API
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
     } catch (error) {
-      toast.error('Failed to save settings');
+      console.error('Error loading settings:', error);
+      setLoading(false);
     }
   };
 
-  const sections = [
-    { id: 'notifications', label: 'Notifications', icon: BellIcon },
-    { id: 'privacy', label: 'Privacy & Data', icon: ShieldCheckIcon },
-    { id: 'preferences', label: 'Preferences', icon: CogIcon },
-    { id: 'danger', label: 'Danger Zone', icon: TrashIcon }
-  ];
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      // Mock save operation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Settings saved:', settings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
 
   if (loading) {
     return (
       <DashboardLayout title="Settings">
-        <div className="space-y-8">
-          <LoadingCard />
-          <LoadingCard />
+        <div className="loading">
+          <div className="spinner"></div>
+          <span>Loading settings...</span>
         </div>
       </DashboardLayout>
     );
@@ -93,325 +80,396 @@ export default function Settings() {
 
   return (
     <DashboardLayout title="Settings">
-      <div className="space-y-8">
-        {/* Header */}
-        <Card>
-          <SectionHeader
-            title="Account Settings"
-            subtitle="Manage your preferences, notifications, and privacy settings"
-            action={
-              <Button onClick={saveSettings}>
-                Save Changes
-              </Button>
-            }
-          />
-        </Card>
+      {/* Dashboard Settings */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            🎨 Dashboard Settings
+          </h3>
+        </div>
 
-        {/* Settings Navigation & Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Side Navigation */}
-          <div className="lg:col-span-1">
-            <Card className="p-0">
-              <nav className="space-y-1 p-4">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <section.icon className="w-5 h-5" />
-                    <span className="font-medium">{section.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </Card>
+        <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Theme
+              </label>
+              <select
+                value={settings.theme}
+                onChange={(e) => updateSetting('theme', e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="dark">Dark Theme</option>
+                <option value="light">Light Theme</option>
+                <option value="auto">Auto (System)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Default Timeframe
+              </label>
+              <select
+                value={settings.defaultTimeframe}
+                onChange={(e) => updateSetting('defaultTimeframe', e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+              </select>
+            </div>
           </div>
 
-          {/* Settings Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {activeSection === 'notifications' && <NotificationSettings settings={settings} onSettingChange={handleSettingChange} />}
-            {activeSection === 'privacy' && <PrivacySettings settings={settings} onSettingChange={handleSettingChange} />}
-            {activeSection === 'preferences' && <PreferenceSettings settings={settings} onSettingChange={handleSettingChange} />}
-            {activeSection === 'danger' && <DangerZoneSettings />}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Date Format
+              </label>
+              <select
+                value={settings.dateFormat}
+                onChange={(e) => updateSetting('dateFormat', e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Auto Refresh Interval
+              </label>
+              <select
+                value={settings.refreshInterval}
+                onChange={(e) => updateSetting('refreshInterval', e.target.value)}
+                disabled={!settings.autoRefresh}
+                style={{ width: '100%' }}
+              >
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Auto Refresh
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Automatically refresh dashboard data
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.autoRefresh}
+              onChange={(e) => updateSetting('autoRefresh', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
           </div>
         </div>
+      </div>
+
+      {/* Notification Settings */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            🔔 Notification Settings
+          </h3>
+        </div>
+
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Email Notifications
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Receive email updates about your analytics
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.emailNotifications}
+              onChange={(e) => updateSetting('emailNotifications', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Weekly Reports
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Receive weekly analytics summaries
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.weeklyReports}
+              onChange={(e) => updateSetting('weeklyReports', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Monthly Reports
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Receive monthly analytics reports
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.monthlyReports}
+              onChange={(e) => updateSetting('monthlyReports', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Alert Thresholds
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Get notified when metrics exceed thresholds
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.alertThresholds}
+              onChange={(e) => updateSetting('alertThresholds', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Real-time Alerts
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Instant notifications for real-time events
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.realTimeAlerts}
+              onChange={(e) => updateSetting('realTimeAlerts', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Privacy Settings */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            🔒 Privacy & Data
+          </h3>
+        </div>
+
+        <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              Data Retention Period
+            </label>
+            <select
+              value={settings.dataRetention}
+              onChange={(e) => updateSetting('dataRetention', e.target.value)}
+              style={{ width: '100%', maxWidth: '300px' }}
+            >
+              <option value="90">90 days</option>
+              <option value="180">6 months</option>
+              <option value="365">1 year</option>
+              <option value="730">2 years</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Anonymize IP Addresses
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Automatically anonymize visitor IP addresses
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.anonymizeIPs}
+              onChange={(e) => updateSetting('anonymizeIPs', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Cookie Consent Banner
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Show cookie consent banner on tracked websites
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.cookieConsent}
+              onChange={(e) => updateSetting('cookieConsent', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Share Analytics
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Allow sharing analytics data with team members
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.shareAnalytics}
+              onChange={(e) => updateSetting('shareAnalytics', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* API Settings */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            🔧 API Settings
+          </h3>
+        </div>
+
+        <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                API Access
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Enable API access for external integrations
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.apiEnabled}
+              onChange={(e) => updateSetting('apiEnabled', e.target.checked)}
+              style={{ width: '20px', height: '20px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              API Rate Limit (requests/hour)
+            </label>
+            <select
+              value={settings.apiRateLimit}
+              onChange={(e) => updateSetting('apiRateLimit', e.target.value)}
+              disabled={!settings.apiEnabled}
+              style={{ width: '100%', maxWidth: '300px' }}
+            >
+              <option value="100">100 requests/hour</option>
+              <option value="500">500 requests/hour</option>
+              <option value="1000">1,000 requests/hour</option>
+              <option value="5000">5,000 requests/hour</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              Webhook URL (optional)
+            </label>
+            <input
+              type="url"
+              value={settings.webhookUrl}
+              onChange={(e) => updateSetting('webhookUrl', e.target.value)}
+              style={{ width: '100%' }}
+              placeholder="https://your-webhook-url.com/analytics"
+            />
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.5rem 0 0 0' }}>
+              Receive real-time analytics events at this URL
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+        <button 
+          onClick={loadSettings}
+          className="btn btn-secondary"
+        >
+          Reset
+        </button>
+        <button 
+          onClick={handleSave}
+          className="btn btn-primary"
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
     </DashboardLayout>
-  );
-}
-
-// Notification Settings Component
-function NotificationSettings({ settings, onSettingChange }) {
-  const toggleSetting = (key) => {
-    onSettingChange('notifications', key, !settings.notifications[key]);
-  };
-
-  return (
-    <Card>
-      <SectionHeader
-        title="Notification Preferences"
-        subtitle="Choose how you want to be notified about your analytics"
-      />
-      
-      <div className="space-y-6">
-        <SettingToggle
-          label="Email Reports"
-          description="Receive weekly analytics reports via email"
-          checked={settings.notifications.emailReports}
-          onChange={() => toggleSetting('emailReports')}
-        />
-        
-        <SettingToggle
-          label="Weekly Digest"
-          description="Get a summary of your website performance every week"
-          checked={settings.notifications.weeklyDigest}
-          onChange={() => toggleSetting('weeklyDigest')}
-        />
-        
-        <SettingToggle
-          label="Alert Threshold"
-          description="Notify when traffic drops below threshold"
-          checked={settings.notifications.alertThreshold}
-          onChange={() => toggleSetting('alertThreshold')}
-        />
-        
-        <SettingToggle
-          label="Real-time Alerts"
-          description="Get instant notifications for significant traffic spikes"
-          checked={settings.notifications.realTimeAlerts}
-          onChange={() => toggleSetting('realTimeAlerts')}
-        />
-      </div>
-    </Card>
-  );
-}
-
-// Privacy Settings Component
-function PrivacySettings({ settings, onSettingChange }) {
-  const toggleSetting = (key) => {
-    onSettingChange('privacy', key, !settings.privacy[key]);
-  };
-
-  return (
-    <Card>
-      <SectionHeader
-        title="Privacy & Data Settings"
-        subtitle="Control how your data is collected and stored"
-      />
-      
-      <div className="space-y-6">
-        <SettingToggle
-          label="Analytics Tracking"
-          description="Enable tracking on your websites"
-          checked={settings.privacy.trackingEnabled}
-          onChange={() => toggleSetting('trackingEnabled')}
-        />
-        
-        <SettingToggle
-          label="Anonymous IP Addresses"
-          description="Anonymize visitor IP addresses for privacy"
-          checked={settings.privacy.anonymizeIPs}
-          onChange={() => toggleSetting('anonymizeIPs')}
-        />
-        
-        <SettingToggle
-          label="Share Aggregate Data"
-          description="Help improve our service with anonymous usage data"
-          checked={settings.privacy.shareData}
-          onChange={() => toggleSetting('shareData')}
-        />
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Data Retention Period
-          </label>
-          <select
-            value={settings.privacy.dataRetention}
-            onChange={(e) => onSettingChange('privacy', 'dataRetention', e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="3">3 months</option>
-            <option value="6">6 months</option>
-            <option value="12">12 months</option>
-            <option value="24">24 months</option>
-            <option value="36">36 months</option>
-          </select>
-          <p className="text-sm text-gray-500 mt-1">
-            How long to keep your analytics data
-          </p>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// Preference Settings Component
-function PreferenceSettings({ settings, onSettingChange }) {
-  return (
-    <Card>
-      <SectionHeader
-        title="General Preferences"
-        subtitle="Customize your dashboard experience"
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Timezone
-          </label>
-          <select
-            value={settings.preferences.timezone}
-            onChange={(e) => onSettingChange('preferences', 'timezone', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="UTC">UTC</option>
-            <option value="America/New_York">Eastern Time</option>
-            <option value="America/Chicago">Central Time</option>
-            <option value="America/Denver">Mountain Time</option>
-            <option value="America/Los_Angeles">Pacific Time</option>
-            <option value="Europe/London">London</option>
-            <option value="Asia/Kolkata">India Standard Time</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Date Format
-          </label>
-          <select
-            value={settings.preferences.dateFormat}
-            onChange={(e) => onSettingChange('preferences', 'dateFormat', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Currency
-          </label>
-          <select
-            value={settings.preferences.currency}
-            onChange={(e) => onSettingChange('preferences', 'currency', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
-            <option value="INR">INR (₹)</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Language
-          </label>
-          <select
-            value={settings.preferences.language}
-            onChange={(e) => onSettingChange('preferences', 'language', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="hi">Hindi</option>
-          </select>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// Danger Zone Component
-function DangerZoneSettings() {
-  const handleExportData = () => {
-    toast.success('Data export initiated. You will receive an email when ready.');
-  };
-
-  const handleDeleteAccount = () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete your account? This action cannot be undone.'
-    );
-    if (confirmed) {
-      toast.error('Account deletion is not implemented yet');
-    }
-  };
-
-  return (
-    <Card className="border-red-200">
-      <SectionHeader
-        title="Danger Zone"
-        subtitle="Irreversible and destructive actions"
-      />
-      
-      <div className="space-y-6">
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-start justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Export Account Data</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Download all your analytics data in JSON format
-              </p>
-            </div>
-            <Button variant="outline" onClick={handleExportData}>
-              Export Data
-            </Button>
-          </div>
-        </div>
-        
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Delete Account</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Permanently delete your account and all associated data
-              </p>
-            </div>
-            <Button variant="danger" onClick={handleDeleteAccount}>
-              Delete Account
-            </Button>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// Toggle Switch Component
-function SettingToggle({ label, description, checked, onChange }) {
-  return (
-    <div className="flex items-start justify-between">
-      <div className="flex-1">
-        <div className="flex items-center space-x-3">
-          <h4 className="font-medium text-gray-900">{label}</h4>
-          {checked ? (
-            <CheckCircleIcon className="w-5 h-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
-        <p className="text-sm text-gray-600 mt-1">{description}</p>
-      </div>
-      <button
-        onClick={onChange}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-blue-600' : 'bg-gray-200'
-        }`}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </button>
-    </div>
   );
 }

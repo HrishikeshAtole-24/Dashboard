@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import '../styles/dashboard.css';
 import { AuthProvider } from '../context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 

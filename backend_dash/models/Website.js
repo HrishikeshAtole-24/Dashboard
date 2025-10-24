@@ -136,6 +136,19 @@ class Website {
     
     return result;
   }
+
+  // Get all websites (for seeding data)
+  static async getAll() {
+    const { sql } = getNeonDB();
+    
+    const result = await sql`
+      SELECT * FROM websites 
+      WHERE is_active = true
+      ORDER BY created_at DESC
+    `;
+    
+    return result;
+  }
 }
 
 module.exports = Website;

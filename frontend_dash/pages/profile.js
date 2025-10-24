@@ -1,113 +1,92 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
-import { 
-  Card, 
-  SectionHeader, 
-  Button, 
-  LoadingCard
-} from '../components/UIComponents';
-import { useRouter } from 'next/router';
-import {
-  UserIcon,
-  EnvelopeIcon,
-  KeyIcon,
-  CameraIcon,
-  CheckCircleIcon
-} from '../components/icons';
-import toast from 'react-hot-toast';
+import { authAPI } from '../utils/api';
 
 export default function Profile() {
-  const { isAuthenticated, loading, user, updateProfile } = useAuth();
-  const router = useRouter();
-  const [profileData, setProfileData] = useState({
+  const [profile, setProfile] = useState({
     name: '',
     email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    bio: '',
+    company: '',
+    location: '',
+    website: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
-  const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [stats, setStats] = useState({
+    totalWebsites: 0,
+    totalPageViews: 0,
+    accountCreated: '',
+    lastLogin: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // Authentication check
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, loading, router]);
+    loadProfile();
+  }, []);
 
-  // Set initial profile data
-  useEffect(() => {
-    if (user) {
-      setProfileData(prev => ({
-        ...prev,
-        name: user.name || '',
-        email: user.email || ''
-      }));
-    }
-  }, [user]);
-
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setLoadingUpdate(true);
-
+  const loadProfile = async () => {
     try {
-      const updateData = {
-        name: profileData.name,
-        email: profileData.email
+      setLoading(true);
+      
+      // Mock profile data
+      const mockProfile = {
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        bio: 'Senior Web Developer passionate about analytics and user experience',
+        company: 'Tech Corp Inc.',
+        location: 'San Francisco, CA',
+        website: 'https://johndoe.dev'
       };
 
-      // Add password change if provided
-      if (profileData.newPassword) {
-        if (profileData.newPassword !== profileData.confirmPassword) {
-          toast.error('New passwords do not match');
-          return;
-        }
-        if (profileData.newPassword.length < 6) {
-          toast.error('Password must be at least 6 characters');
-          return;
-        }
-        updateData.currentPassword = profileData.currentPassword;
-        updateData.newPassword = profileData.newPassword;
-      }
+      const mockStats = {
+        totalWebsites: 5,
+        totalPageViews: 125000,
+        accountCreated: '2024-01-15',
+        lastLogin: new Date().toISOString()
+      };
 
-      await updateProfile(updateData);
-      toast.success('Profile updated successfully');
-      setIsEditing(false);
-      
-      // Clear password fields
-      setProfileData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }));
+      setProfile(mockProfile);
+      setStats(mockStats);
     } catch (error) {
-      toast.error('Failed to update profile');
+      console.error('Error loading profile:', error);
     } finally {
-      setLoadingUpdate(false);
+      setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setProfileData(prev => ({
-      ...prev,
-      name: user?.name || '',
-      email: user?.email || '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      // await authAPI.updateProfile(profile);
+      console.log('Profile updated:', profile);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toLocaleString();
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
     return (
       <DashboardLayout title="Profile">
-        <div className="space-y-8">
-          <LoadingCard />
-          <LoadingCard />
+        <div className="loading">
+          <div className="spinner"></div>
+          <span>Loading profile...</span>
         </div>
       </DashboardLayout>
     );
@@ -115,223 +94,303 @@ export default function Profile() {
 
   return (
     <DashboardLayout title="Profile">
-      <div className="space-y-8">
-        {/* Profile Header */}
-        <Card>
-          <div className="flex items-center space-x-6">
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <UserIcon className="w-12 h-12 text-white" />
-              </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50">
-                <CameraIcon className="w-4 h-4 text-gray-600" />
-              </button>
+      {/* Profile Header */}
+      <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '0.75rem',
+            background: 'var(--accent-blue)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '2rem',
+            fontWeight: '700',
+            flexShrink: 0
+          }}>
+            {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+          </div>
+          
+          <div style={{ flex: 1 }}>
+            <h2 style={{ 
+              color: 'var(--text-primary)', 
+              margin: '0 0 0.5rem 0',
+              fontSize: '1.5rem',
+              fontWeight: '600'
+            }}>
+              {profile.name || 'User'}
+            </h2>
+            <p style={{ 
+              color: 'var(--text-secondary)', 
+              margin: '0 0 0.5rem 0',
+              fontSize: '1rem'
+            }}>
+              {profile.email}
+            </p>
+            <p style={{ 
+              color: 'var(--text-muted)', 
+              margin: 0,
+              fontSize: '0.875rem'
+            }}>
+              {profile.bio || 'No bio provided'}
+            </p>
+          </div>
+
+          <button className="btn btn-secondary">
+            Change Avatar
+          </button>
+        </div>
+      </div>
+
+      {/* Account Stats */}
+      <div className="dashboard-grid" style={{ marginBottom: '2rem' }}>
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3 className="card-title">Total Websites</h3>
+            <div className="card-icon primary">🌐</div>
+          </div>
+          <div className="card-content">
+            <div className="metric-value">{stats.totalWebsites}</div>
+            <p className="metric-label">Tracked websites</p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3 className="card-title">Total Page Views</h3>
+            <div className="card-icon success">📊</div>
+          </div>
+          <div className="card-content">
+            <div className="metric-value">{formatNumber(stats.totalPageViews)}</div>
+            <p className="metric-label">All-time views</p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3 className="card-title">Member Since</h3>
+            <div className="card-icon warning">📅</div>
+          </div>
+          <div className="card-content">
+            <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+              {formatDate(stats.accountCreated)}
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{user?.name || 'User'}</h1>
-              <p className="text-gray-600">{user?.email}</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Member since {new Date(user?.created_at || Date.now()).toLocaleDateString()}
+            <p className="metric-label">Account created</p>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3 className="card-title">Last Login</h3>
+            <div className="card-icon primary">🕐</div>
+          </div>
+          <div className="card-content">
+            <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+              {new Date(stats.lastLogin).toLocaleDateString()}
+            </div>
+            <p className="metric-label">Recent activity</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Form */}
+      <div className="dashboard-card">
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            Profile Information
+          </h3>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={profile.name}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                style={{ width: '100%' }}
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={profile.email}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                style={{ width: '100%' }}
+                placeholder="Enter your email"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Company
+              </label>
+              <input
+                type="text"
+                value={profile.company}
+                onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                style={{ width: '100%' }}
+                placeholder="Your company name"
+              />
+            </div>
+
+            <div>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem',
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}>
+                Location
+              </label>
+              <input
+                type="text"
+                value={profile.location}
+                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                style={{ width: '100%' }}
+                placeholder="City, Country"
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              Website
+            </label>
+            <input
+              type="url"
+              value={profile.website}
+              onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+              style={{ width: '100%' }}
+              placeholder="https://yourwebsite.com"
+            />
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem',
+              color: 'var(--text-primary)',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              Bio
+            </label>
+            <textarea
+              value={profile.bio}
+              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+              style={{ width: '100%', minHeight: '100px', resize: 'vertical' }}
+              placeholder="Tell us about yourself..."
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              onClick={loadProfile}
+            >
+              Reset
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Security Section */}
+      <div className="dashboard-card" style={{ marginTop: '2rem' }}>
+        <div className="card-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.125rem', fontWeight: '600', margin: 0 }}>
+            Security & Privacy
+          </h3>
+        </div>
+
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Change Password
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Update your password to keep your account secure
               </p>
             </div>
+            <button className="btn btn-secondary">
+              Change
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
             <div>
-              <Button 
-                onClick={() => setIsEditing(!isEditing)}
-                variant={isEditing ? 'secondary' : 'primary'}
-              >
-                {isEditing ? 'Cancel' : 'Edit Profile'}
-              </Button>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Two-Factor Authentication
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Add an extra layer of security to your account
+              </p>
             </div>
+            <button className="btn btn-primary">
+              Enable
+            </button>
           </div>
-        </Card>
 
-        {/* Profile Information */}
-        <Card>
-          <form onSubmit={handleProfileUpdate}>
-            <SectionHeader
-              title="Profile Information"
-              subtitle="Update your account details and preferences"
-              action={
-                isEditing && (
-                  <div className="flex space-x-3">
-                    <Button 
-                      type="button" 
-                      variant="secondary" 
-                      onClick={handleCancel}
-                      disabled={loadingUpdate}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={loadingUpdate}
-                    >
-                      {loadingUpdate ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                )
-              }
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    disabled={!isEditing}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    disabled={!isEditing}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--secondary-bg)', borderRadius: '0.5rem' }}>
+            <div>
+              <h4 style={{ color: 'var(--text-primary)', margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: '600' }}>
+                Download Data
+              </h4>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.8125rem' }}>
+                Export all your data and analytics
+              </p>
             </div>
-
-            {/* Password Change Section */}
-            {isEditing && (
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Change Password</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Password
-                    </label>
-                    <div className="relative">
-                      <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={profileData.currentPassword}
-                        onChange={(e) => setProfileData({ ...profileData, currentPassword: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Current password"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={profileData.newPassword}
-                        onChange={(e) => setProfileData({ ...profileData, newPassword: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="New password"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={profileData.confirmPassword}
-                        onChange={(e) => setProfileData({ ...profileData, confirmPassword: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Confirm password"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Leave password fields empty if you don't want to change your password.
-                </p>
-              </div>
-            )}
-          </form>
-        </Card>
-
-        {/* Account Stats */}
-        <Card>
-          <SectionHeader
-            title="Account Statistics"
-            subtitle="Your activity and usage summary"
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-blue-50 rounded-lg">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {user?.websiteCount || 0}
-              </div>
-              <div className="text-sm text-gray-600">Websites Tracked</div>
-            </div>
-            
-            <div className="text-center p-6 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600 mb-2">
-                {user?.totalPageViews || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Page Views</div>
-            </div>
-            
-            <div className="text-center p-6 bg-purple-50 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600 mb-2">
-                {user?.daysActive || 0}
-              </div>
-              <div className="text-sm text-gray-600">Days Active</div>
-            </div>
+            <button className="btn btn-secondary">
+              Export
+            </button>
           </div>
-        </Card>
-
-        {/* Account Security */}
-        <Card>
-          <SectionHeader
-            title="Account Security"
-            subtitle="Manage your account security settings"
-          />
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                <div>
-                  <div className="font-medium text-gray-900">Email Verified</div>
-                  <div className="text-sm text-gray-600">Your email address is verified</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <KeyIcon className="w-6 h-6 text-gray-600" />
-                <div>
-                  <div className="font-medium text-gray-900">Password Strength</div>
-                  <div className="text-sm text-gray-600">Strong password protection enabled</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
