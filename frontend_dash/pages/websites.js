@@ -9,7 +9,7 @@ export default function Websites() {
   const [editingWebsite, setEditingWebsite] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    url: '',
+    domain: '',
     description: ''
   });
 
@@ -35,14 +35,14 @@ export default function Websites() {
     e.preventDefault();
     try {
       if (editingWebsite) {
-        await websiteAPI.update(editingWebsite._id, formData);
+        await websiteAPI.update(editingWebsite.id, formData);
       } else {
         await websiteAPI.create(formData);
       }
       
       setShowModal(false);
       setEditingWebsite(null);
-      setFormData({ name: '', url: '', description: '' });
+      setFormData({ name: '', domain: '', description: '' });
       loadWebsites();
     } catch (error) {
       console.error('Error saving website:', error);
@@ -53,7 +53,7 @@ export default function Websites() {
     setEditingWebsite(website);
     setFormData({
       name: website.name,
-      url: website.url,
+      domain: website.domain,
       description: website.description || ''
     });
     setShowModal(true);
@@ -71,7 +71,7 @@ export default function Websites() {
   };
 
   const getTrackingCode = (websiteId) => {
-    return `<script async src="http://localhost:3000/track.js" data-website-id="${websiteId}"></script>`;
+    return `<script async src="http://localhost:3001/tracking/script.js?id=${websiteId}"></script>`;
   };
 
   const copyToClipboard = (text) => {
@@ -120,14 +120,14 @@ export default function Websites() {
       ) : (
         <div className="dashboard-grid">
           {websites.map((website) => (
-            <div key={website._id} className="dashboard-card">
+            <div key={website.id} className="dashboard-card">
               <div className="card-header">
                 <div>
                   <h3 className="card-title" style={{ textTransform: 'none', fontSize: '1rem', marginBottom: '0.5rem' }}>
                     {website.name}
                   </h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
-                    {website.url}
+                    {website.domain}
                   </p>
                 </div>
                 <div className="card-icon primary">🌐</div>
@@ -152,10 +152,10 @@ export default function Websites() {
                     wordBreak: 'break-all',
                     color: 'var(--text-secondary)'
                   }}>
-                    {getTrackingCode(website._id)}
+                    {getTrackingCode(website.website_id)}
                   </div>
-                  <button 
-                    onClick={() => copyToClipboard(getTrackingCode(website._id))}
+                  <button
+                    onClick={() => copyToClipboard(getTrackingCode(website.website_id))}
                     className="btn btn-secondary"
                     style={{ marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}
                   >
@@ -170,7 +170,7 @@ export default function Websites() {
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
                 <button 
-                  onClick={() => window.open(`/analytics?website=${website._id}`, '_blank')}
+                  onClick={() => window.open(`/analytics?website=${website.website_id}`, '_blank')}
                   className="btn btn-primary"
                   style={{ flex: 1, fontSize: '0.75rem' }}
                 >
@@ -184,7 +184,7 @@ export default function Websites() {
                   ✏️
                 </button>
                 <button 
-                  onClick={() => handleDelete(website._id)}
+                  onClick={() => handleDelete(website.id)}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.75rem', color: 'var(--danger)' }}
                 >
@@ -294,15 +294,15 @@ export default function Websites() {
                   fontSize: '0.875rem',
                   fontWeight: '500'
                 }}>
-                  Website URL *
+                  Website Domain *
                 </label>
                 <input
                   type="url"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  value={formData.domain}
+                  onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
                   required
                   style={{ width: '100%' }}
-                  placeholder="https://example.com"
+                  placeholder="https://example.com or example.com"
                 />
               </div>
               
@@ -330,7 +330,7 @@ export default function Websites() {
                   onClick={() => {
                     setShowModal(false);
                     setEditingWebsite(null);
-                    setFormData({ name: '', url: '', description: '' });
+                    setFormData({ name: '', domain: '', description: '' });
                   }}
                   className="btn btn-secondary"
                 >

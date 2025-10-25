@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const Event = require('../models/Event');
 const DailyStats = require('../models/DailyStats');
 const { calculateBounceRate } = require('../utils/helpers');
+const { batchProcessGoalCompletions } = require('../batch-process-goals');
 
 class AggregationJob {
   constructor() {
@@ -68,6 +69,11 @@ class AggregationJob {
       }
 
       console.log(`📊 Aggregation completed for ${dateStr}`);
+      
+      // Process goal completions for all websites
+      console.log('🎯 Processing goal completions...');
+      await batchProcessGoalCompletions();
+      
     } catch (error) {
       console.error('📊 Aggregation error:', error);
     } finally {

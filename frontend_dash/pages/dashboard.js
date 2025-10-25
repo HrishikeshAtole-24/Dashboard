@@ -74,6 +74,7 @@ export default function Dashboard() {
   const [selectedWebsite, setSelectedWebsite] = useState('all');
   const [timeframe, setTimeframe] = useState(30);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [chartView, setChartView] = useState('both'); // 'views', 'visitors', 'both'
 
   useEffect(() => {
@@ -167,26 +168,16 @@ export default function Dashboard() {
           }
         } catch (error) {
           console.error('Error loading aggregated data:', error);
-          // Fallback to mock data
-          const mockData = {
-            totalPageViews: 45823,
-            uniqueVisitors: 12547,
-            bounceRate: 32.8,
-            avgSessionTime: 189,
-            growth: { pageViews: 18.2, visitors: 12.5, bounceRate: -8.3, sessionTime: 22.1 }
+          // Show zero data instead of mock data
+          const emptyStats = {
+            totalPageViews: 0,
+            uniqueVisitors: 0,
+            bounceRate: 0,
+            avgSessionTime: 0,
+            growth: { pageViews: 0, visitors: 0, bounceRate: 0, sessionTime: 0 }
           };
-          setStats(mockData);
-          
-          const mockChartData = Array.from({ length: 30 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (29 - i));
-            return {
-              date: date.toISOString().split('T')[0],
-              pageViews: Math.floor(Math.random() * 800) + 400,
-              visitors: Math.floor(Math.random() * 500) + 250
-            };
-          });
-          setChartData(mockChartData);
+          setStats(emptyStats);
+          setChartData([]);
         }
       } else {
         // Fetch real data for selected website
@@ -290,6 +281,23 @@ export default function Dashboard() {
     if (growth > 0) return 'positive';
     if (growth < 0) return 'negative';
     return '';
+  };
+
+  const handleManualRefresh = async () => {
+    if (selectedWebsite === 'all' || refreshing) return;
+    
+    try {
+      setRefreshing(true);
+      await analyticsAPI.triggerAggregation(selectedWebsite);
+      // Wait a moment then reload data
+      setTimeout(() => {
+        loadDashboardData();
+      }, 2000);
+    } catch (error) {
+      console.error('Error triggering data aggregation:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Dynamic chart series based on selected view
@@ -515,7 +523,7 @@ export default function Dashboard() {
         >
           <option value="all">All Websites</option>
           {websites.map(website => (
-            <option key={website._id} value={website._id}>
+            <option key={website.id} value={website.website_id}>
               {website.name}
             </option>
           ))}
@@ -540,6 +548,17 @@ export default function Dashboard() {
           >
             90 days
           </button>
+          
+          {selectedWebsite !== 'all' && (
+            <button 
+              className={`filter-btn refresh-btn ${refreshing ? 'refreshing' : ''}`}
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              title="Manually trigger data aggregation"
+            >
+              {refreshing ? '🔄' : '↻'} Refresh
+            </button>
+          )}
         </div>
       </div>
 

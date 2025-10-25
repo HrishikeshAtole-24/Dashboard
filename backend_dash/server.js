@@ -19,6 +19,7 @@ const Website = require('./models/Website');
 const authRoutes = require('./routes/auth');
 const collectRoutes = require('./routes/collect');
 const dashboardRoutes = require('./routes/dashboard');
+const goalsRoutes = require('./routes/goals');
 
 // Import cron jobs
 const aggregationJob = require('./cron/aggregateJob');
@@ -158,6 +159,7 @@ app.get('/tracking/script.js', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/collect', collectLimiter, collectRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard/goals', goalsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

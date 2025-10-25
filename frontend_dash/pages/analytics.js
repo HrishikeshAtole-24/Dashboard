@@ -30,53 +30,183 @@ export default function Analytics() {
     try {
       setLoading(true);
       
-      // Mock comprehensive analytics data
-      const mockData = {
-        pageViews: 28947,
-        uniqueVisitors: 15823,
-        bounceRate: 38.2,
-        avgSessionTime: 224
-      };
+      if (selectedWebsite === 'all') {
+        // Aggregate data from all user's websites
+        try {
+          const websitesResponse = await websiteAPI.getAll();
+          const userWebsites = websitesResponse.success ? websitesResponse.data : [];
+          
+          if (userWebsites.length > 0) {
+            let totalPageViews = 0;
+            let totalUniqueVisitors = 0;
+            let totalBounceRate = 0;
+            let totalDuration = 0;
+            let websiteCount = 0;
+            let aggregatedTopPages = {};
+            let aggregatedChartData = {};
+            let aggregatedReferrers = {};
+            
+            for (const website of userWebsites) {
+              try {
+                const overviewResponse = await analyticsAPI.getOverview(website.website_id, timeframe);
+                const topPagesResponse = await analyticsAPI.getTopPages(website.website_id, timeframe);
+                const chartResponse = await analyticsAPI.getChartData(website.website_id, timeframe);
+                const referrersResponse = await analyticsAPI.getReferrers(website.website_id, timeframe);
+                
+                totalPageViews += overviewResponse.stats.totalPageViews || 0;
+                totalUniqueVisitors += overviewResponse.stats.uniqueVisitors || 0;
+                totalBounceRate += overviewResponse.stats.avgBounceRate || 0;
+                totalDuration += overviewResponse.stats.avgDuration || 0;
+                websiteCount++;
+                
+                // Aggregate top pages
+                topPagesResponse.topPages?.forEach(page => {
+                  if (!aggregatedTopPages[page.url]) {
+                    aggregatedTopPages[page.url] = { path: page.url, views: 0 };
+                  }
+                  aggregatedTopPages[page.url].views += page.page_views || 0;
+                });
 
-      const mockDevices = [
-        { name: 'Desktop', value: 45.2, color: '#0070f3' },
-        { name: 'Mobile', value: 38.7, color: '#00d9ff' },
-        { name: 'Tablet', value: 16.1, color: '#f5a623' }
-      ];
+                // Aggregate referrers
+                referrersResponse.referrers?.forEach(referrer => {
+                  if (!aggregatedReferrers[referrer.name]) {
+                    aggregatedReferrers[referrer.name] = { name: referrer.name, visitors: 0, pageViews: 0 };
+                  }
+                  aggregatedReferrers[referrer.name].visitors += referrer.visitors || 0;
+                  aggregatedReferrers[referrer.name].pageViews += referrer.pageViews || 0;
+                });
+                
+                // Aggregate chart data by date
+                chartResponse.chartData?.forEach(item => {
+                  if (!aggregatedChartData[item.date]) {
+                    aggregatedChartData[item.date] = { 
+                      date: item.date, 
+                      pageViews: 0, 
+                      visitors: 0, 
+                      sessions: 0 
+                    };
+                  }
+                  aggregatedChartData[item.date].pageViews += item.page_views || 0;
+                  aggregatedChartData[item.date].visitors += item.unique_visitors || 0;
+                  aggregatedChartData[item.date].sessions += item.visits || 0;
+                });
+              } catch (websiteError) {
+                console.warn(`Error loading analytics for website ${website.domain}:`, websiteError);
+              }
+            }
+            
+            const realData = {
+              pageViews: totalPageViews,
+              uniqueVisitors: totalUniqueVisitors,
+              bounceRate: websiteCount > 0 ? totalBounceRate / websiteCount : 0,
+              avgSessionTime: websiteCount > 0 ? totalDuration / websiteCount : 0
+            };
 
-      const mockReferrers = [
-        { name: 'Google', visitors: 8934, percentage: 56.4 },
-        { name: 'Direct', visitors: 3247, percentage: 20.5 },
-        { name: 'Facebook', visitors: 1829, percentage: 11.6 },
-        { name: 'Twitter', visitors: 945, percentage: 6.0 },
-        { name: 'LinkedIn', visitors: 568, percentage: 3.6 },
-        { name: 'Other', visitors: 300, percentage: 1.9 }
-      ];
+            // Convert aggregated top pages to array and sort
+            const topPagesArray = Object.values(aggregatedTopPages)
+              .sort((a, b) => b.views - a.views)
+              .slice(0, 10)
+              .map(page => ({
+                ...page,
+                percentage: totalPageViews > 0 ? (page.views / totalPageViews * 100).toFixed(1) : 0
+              }));
 
-      const mockTopPages = [
-        { path: '/dashboard', views: 4521, percentage: 15.6 },
-        { path: '/analytics', views: 3247, percentage: 11.2 },
-        { path: '/websites', views: 2834, percentage: 9.8 },
-        { path: '/profile', views: 2156, percentage: 7.4 },
-        { path: '/settings', views: 1943, percentage: 6.7 }
-      ];
+            // Convert aggregated chart data to array
+            const chartDataArray = Object.values(aggregatedChartData).sort((a, b) => 
+              new Date(a.date) - new Date(b.date)
+            );
 
-      const mockChartData = Array.from({ length: 30 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (29 - i));
-        return {
-          date: date.toISOString().split('T')[0],
-          pageViews: Math.floor(Math.random() * 600) + 400,
-          visitors: Math.floor(Math.random() * 400) + 200,
-          sessions: Math.floor(Math.random() * 350) + 180
-        };
-      });
+            // Convert aggregated referrers to array and calculate percentages
+            const totalReferrerVisitors = Object.values(aggregatedReferrers).reduce((sum, ref) => sum + ref.visitors, 0);
+            const referrersArray = Object.values(aggregatedReferrers)
+              .sort((a, b) => b.visitors - a.visitors)
+              .slice(0, 10)
+              .map(referrer => ({
+                ...referrer,
+                percentage: totalReferrerVisitors > 0 ? (referrer.visitors / totalReferrerVisitors * 100).toFixed(1) : 0
+              }));
 
-      setData(mockData);
-      setDevices(mockDevices);
-      setReferrers(mockReferrers);
-      setTopPages(mockTopPages);
-      setChartData(mockChartData);
+            setData(realData);
+            setTopPages(topPagesArray);
+            setChartData(chartDataArray);
+            setReferrers(referrersArray);
+            
+            // For devices, we'll show placeholder data since backend doesn't have this yet
+            setDevices([
+              { name: 'Desktop', value: 45.2, color: '#0070f3' },
+              { name: 'Mobile', value: 38.7, color: '#00d9ff' },
+              { name: 'Tablet', value: 16.1, color: '#f5a623' }
+            ]);
+            
+          } else {
+            // No websites, show zero data
+            setData({ pageViews: 0, uniqueVisitors: 0, bounceRate: 0, avgSessionTime: 0 });
+            setTopPages([]);
+            setChartData([]);
+            setDevices([]);
+            setReferrers([]);
+          }
+        } catch (error) {
+          console.error('Error loading aggregated analytics:', error);
+          // Show zero data on error
+          setData({ pageViews: 0, uniqueVisitors: 0, bounceRate: 0, avgSessionTime: 0 });
+          setTopPages([]);
+          setChartData([]);
+          setDevices([]);
+          setReferrers([]);
+        }
+      } else {
+        // Load data for specific website
+        try {
+          const overviewResponse = await analyticsAPI.getOverview(selectedWebsite, timeframe);
+          const topPagesResponse = await analyticsAPI.getTopPages(selectedWebsite, timeframe);
+          const chartResponse = await analyticsAPI.getChartData(selectedWebsite, timeframe);
+          const referrersResponse = await analyticsAPI.getReferrers(selectedWebsite, timeframe);
+          
+          const realData = {
+            pageViews: overviewResponse.stats.totalPageViews || 0,
+            uniqueVisitors: overviewResponse.stats.uniqueVisitors || 0,
+            bounceRate: overviewResponse.stats.avgBounceRate || 0,
+            avgSessionTime: overviewResponse.stats.avgDuration || 0
+          };
+
+          const realTopPages = topPagesResponse.topPages?.map(page => ({
+            path: page.url,
+            views: page.page_views || 0,
+            percentage: overviewResponse.stats.totalPageViews > 0 ? 
+              ((page.page_views || 0) / overviewResponse.stats.totalPageViews * 100).toFixed(1) : 0
+          })) || [];
+
+          const realChartData = chartResponse.chartData?.map(item => ({
+            date: item.date,
+            pageViews: item.page_views || 0,
+            visitors: item.unique_visitors || 0,
+            sessions: item.visits || 0
+          })) || [];
+
+          const realReferrers = referrersResponse.referrers || [];
+
+          setData(realData);
+          setTopPages(realTopPages);
+          setChartData(realChartData);
+          setReferrers(realReferrers);
+          
+          // Placeholder data for devices
+          setDevices([
+            { name: 'Desktop', value: 45.2, color: '#0070f3' },
+            { name: 'Mobile', value: 38.7, color: '#00d9ff' },
+            { name: 'Tablet', value: 16.1, color: '#f5a623' }
+          ]);
+          
+        } catch (error) {
+          console.error('Error loading website analytics:', error);
+          setData({ pageViews: 0, uniqueVisitors: 0, bounceRate: 0, avgSessionTime: 0 });
+          setTopPages([]);
+          setChartData([]);
+          setDevices([]);
+          setReferrers([]);
+        }
+      }
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
@@ -208,7 +338,7 @@ export default function Analytics() {
         >
           <option value="all">All Websites</option>
           {websites.map(website => (
-            <option key={website._id} value={website._id}>
+            <option key={website.id} value={website.website_id}>
               {website.name}
             </option>
           ))}

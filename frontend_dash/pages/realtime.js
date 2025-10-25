@@ -11,6 +11,7 @@ export default function Realtime() {
   });
 
   const [activity, setActivity] = useState([]);
+  const [geographic, setGeographic] = useState([]);
   const [websites, setWebsites] = useState([]);
   const [selectedWebsite, setSelectedWebsite] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -33,43 +34,158 @@ export default function Realtime() {
     try {
       setLoading(true);
       
-      // Mock real-time data
-      const mockData = {
-        activeVisitors: Math.floor(Math.random() * 50) + 10,
-        pageViewsLast5Min: Math.floor(Math.random() * 100) + 20,
-        topPage: '/',
-        activeVisitorsData: Math.floor(Math.random() * 50) + 10
-      };
+      if (selectedWebsite === 'all') {
+        // Aggregate realtime data from all user's websites
+        try {
+          const websitesResponse = await websiteAPI.getAll();
+          const userWebsites = websitesResponse.success ? websitesResponse.data : [];
+          
+          if (userWebsites.length > 0) {
+            let totalActiveVisitors = 0;
+            let totalRecentPageViews = 0;
+            let allRecentEvents = [];
+            let topPageCounts = {};
+            let aggregatedGeographic = {};
+            
+            for (const website of userWebsites) {
+              try {
+                const realtimeResponse = await analyticsAPI.getRealtime(website.website_id);
+                const geographicResponse = await analyticsAPI.getGeographic(website.website_id, 7); // Last 7 days for realtime
+                
+                totalActiveVisitors += realtimeResponse.realtimeStats.activeVisitors || 0;
+                totalRecentPageViews += realtimeResponse.realtimeStats.recentPageViews || 0;
+                
+                // Collect recent events
+                if (realtimeResponse.realtimeStats.recentEvents) {
+                  allRecentEvents.push(...realtimeResponse.realtimeStats.recentEvents.map(event => ({
+                    ...event,
+                    websiteDomain: website.domain
+                  })));
+                }
 
-      const mockActivity = Array.from({ length: 10 }, (_, i) => {
-        const activities = [
-          'New visitor from United States',
-          'Page view: /dashboard',
-          'New visitor from Canada',
-          'Page view: /analytics',
-          'Visitor returned from Germany',
-          'Page view: /websites',
-          'New visitor from UK',
-          'Page view: /profile',
-          'Visitor left from France',
-          'Page view: /'
-        ];
-        
-        const now = new Date();
-        now.setSeconds(now.getSeconds() - (i * 30));
-        
-        return {
-          id: i,
-          message: activities[Math.floor(Math.random() * activities.length)],
-          timestamp: now,
-          type: activities[i % activities.length].includes('New') ? 'new' : 
-                activities[i % activities.length].includes('returned') ? 'return' : 
-                activities[i % activities.length].includes('left') ? 'exit' : 'pageview'
-        };
-      });
+                // Aggregate geographic data
+                if (geographicResponse.geographic) {
+                  geographicResponse.geographic.forEach(geo => {
+                    if (!aggregatedGeographic[geo.country]) {
+                      aggregatedGeographic[geo.country] = {
+                        country: geo.country,
+                        countryCode: geo.countryCode,
+                        visitors: 0
+                      };
+                    }
+                    aggregatedGeographic[geo.country].visitors += geo.visitors;
+                  });
+                }
+              } catch (websiteError) {
+                console.warn(`Error loading realtime data for website ${website.domain}:`, websiteError);
+              }
+            }
+            
+            // Sort events by timestamp and take most recent
+            allRecentEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // Find top page from recent events
+            allRecentEvents.forEach(event => {
+              if (event.eventType === 'page_view') {
+                topPageCounts[event.url] = (topPageCounts[event.url] || 0) + 1;
+              }
+            });
+            
+            const topPage = Object.entries(topPageCounts).length > 0 ? 
+              Object.entries(topPageCounts).sort(([,a], [,b]) => b - a)[0][0] : '/';
+            
+            const realData = {
+              activeVisitors: totalActiveVisitors,
+              pageViewsLast5Min: totalRecentPageViews,
+              topPage,
+              activeVisitorsData: totalActiveVisitors
+            };
 
-      setRealtimeData(mockData);
-      setActivity(mockActivity);
+            // Transform events to activity format
+            const realActivity = allRecentEvents.slice(0, 20).map((event, i) => ({
+              id: i,
+              message: `${event.eventType === 'page_view' ? 'Page view' : event.eventType}: ${event.url} (${event.websiteDomain})`,
+              timestamp: new Date(event.timestamp),
+              type: event.eventType === 'page_view' ? 'pageview' : event.eventType
+            }));
+
+            // Process aggregated geographic data
+            const totalGeoVisitors = Object.values(aggregatedGeographic).reduce((sum, geo) => sum + geo.visitors, 0);
+            const geographicArray = Object.values(aggregatedGeographic)
+              .sort((a, b) => b.visitors - a.visitors)
+              .slice(0, 6)
+              .map(geo => ({
+                ...geo,
+                percentage: totalGeoVisitors > 0 ? (geo.visitors / totalGeoVisitors * 100).toFixed(1) : 0
+              }));
+
+            setRealtimeData(realData);
+            setActivity(realActivity);
+            setGeographic(geographicArray);
+            
+          } else {
+            // No websites, show zero data
+            setRealtimeData({
+              activeVisitors: 0,
+              pageViewsLast5Min: 0,
+              topPage: '/',
+              activeVisitorsData: 0
+            });
+            setActivity([]);
+            setGeographic([]);
+          }
+        } catch (error) {
+          console.error('Error loading aggregated realtime data:', error);
+          // Show zero data on error
+          setRealtimeData({
+            activeVisitors: 0,
+            pageViewsLast5Min: 0,
+            topPage: '/',
+            activeVisitorsData: 0
+          });
+          setActivity([]);
+          setGeographic([]);
+        }
+      } else {
+        // Load data for specific website
+        try {
+          const realtimeResponse = await analyticsAPI.getRealtime(selectedWebsite);
+          const geographicResponse = await analyticsAPI.getGeographic(selectedWebsite, 7); // Last 7 days
+          
+          const realData = {
+            activeVisitors: realtimeResponse.realtimeStats.activeVisitors || 0,
+            pageViewsLast5Min: realtimeResponse.realtimeStats.recentPageViews || 0,
+            topPage: realtimeResponse.realtimeStats.recentEvents?.[0]?.url || '/',
+            activeVisitorsData: realtimeResponse.realtimeStats.activeVisitors || 0
+          };
+
+          // Transform events to activity format
+          const realActivity = (realtimeResponse.realtimeStats.recentEvents || []).map((event, i) => ({
+            id: i,
+            message: `${event.eventType === 'page_view' ? 'Page view' : event.eventType}: ${event.url}`,
+            timestamp: new Date(event.timestamp),
+            type: event.eventType === 'page_view' ? 'pageview' : event.eventType
+          }));
+
+          // Process geographic data
+          const realGeographic = geographicResponse.geographic || [];
+
+          setRealtimeData(realData);
+          setActivity(realActivity);
+          setGeographic(realGeographic);
+          
+        } catch (error) {
+          console.error('Error loading website realtime data:', error);
+          setRealtimeData({
+            activeVisitors: 0,
+            pageViewsLast5Min: 0,
+            topPage: '/',
+            activeVisitorsData: 0
+          });
+          setActivity([]);
+          setGeographic([]);
+        }
+      }
     } catch (error) {
       console.error('Error loading realtime data:', error);
     } finally {
@@ -117,6 +233,27 @@ export default function Realtime() {
     }
   };
 
+  const getCountryFlag = (countryCode) => {
+    const flagEmojis = {
+      'US': '🇺🇸', 'GB': '🇬🇧', 'CA': '🇨🇦', 'DE': '🇩🇪', 'FR': '🇫🇷',
+      'IT': '🇮🇹', 'ES': '🇪🇸', 'NL': '🇳🇱', 'SE': '🇸🇪', 'AU': '🇦🇺',
+      'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'IN': '🇮🇳', 'BR': '🇧🇷',
+      'MX': '🇲🇽', 'AR': '🇦🇷', 'RU': '🇷🇺', 'TR': '🇹🇷', 'SA': '🇸🇦',
+      'AE': '🇦🇪', 'SG': '🇸🇬', 'MY': '🇲🇾', 'TH': '🇹🇭', 'VN': '🇻🇳',
+      'PH': '🇵🇭', 'ID': '🇮🇩', 'PK': '🇵🇰', 'BD': '🇧🇩', 'LK': '🇱🇰',
+      'NP': '🇳🇵', 'AF': '🇦🇫', 'EG': '🇪🇬', 'ZA': '🇿🇦', 'NG': '🇳🇬',
+      'KE': '🇰🇪', 'GH': '🇬🇭', 'MA': '🇲🇦', 'TN': '🇹🇳', 'DZ': '🇩🇿',
+      'UA': '🇺🇦', 'PL': '🇵🇱', 'RO': '🇷🇴', 'CZ': '🇨🇿', 'HU': '🇭🇺',
+      'BG': '🇧🇬', 'HR': '🇭🇷', 'RS': '🇷🇸', 'BA': '🇧🇦', 'SI': '🇸🇮',
+      'SK': '🇸🇰', 'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪', 'FI': '🇫🇮',
+      'DK': '🇩🇰', 'NO': '🇳🇴', 'IS': '🇮🇸', 'IE': '🇮🇪', 'PT': '🇵🇹',
+      'CH': '🇨🇭', 'AT': '🇦🇹', 'BE': '🇧🇪', 'LU': '🇱🇺', 'CY': '🇨🇾',
+      'MT': '🇲🇹', 'GR': '🇬🇷', 'AL': '🇦🇱', 'MK': '🇲🇰', 'ME': '🇲🇪',
+      'localhost': '🏠', 'unknown': '🌐'
+    };
+    return flagEmojis[countryCode] || '🌐';
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Real-time Analytics">
@@ -146,7 +283,7 @@ export default function Realtime() {
         >
           <option value="all">All Websites</option>
           {websites.map(website => (
-            <option key={website._id} value={website._id}>
+            <option key={website.id} value={website.website_id}>
               {website.name}
             </option>
           ))}
@@ -314,36 +451,21 @@ export default function Realtime() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>🇺🇸 United States</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.4)}</td>
-                <td>40%</td>
-              </tr>
-              <tr>
-                <td>🇨🇦 Canada</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.2)}</td>
-                <td>20%</td>
-              </tr>
-              <tr>
-                <td>🇬🇧 United Kingdom</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.15)}</td>
-                <td>15%</td>
-              </tr>
-              <tr>
-                <td>🇩🇪 Germany</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.12)}</td>
-                <td>12%</td>
-              </tr>
-              <tr>
-                <td>🇫🇷 France</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.08)}</td>
-                <td>8%</td>
-              </tr>
-              <tr>
-                <td>🌍 Others</td>
-                <td>{Math.floor(realtimeData.activeVisitors * 0.05)}</td>
-                <td>5%</td>
-              </tr>
+              {geographic.length > 0 ? (
+                geographic.map((location, index) => (
+                  <tr key={index}>
+                    <td>{getCountryFlag(location.country)} {location.countryName || location.country}</td>
+                    <td>{location.visitors}</td>
+                    <td>{location.percentage}%</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No geographic data available
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

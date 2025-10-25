@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { authAPI } from '../utils/api';
+import { authAPI, websiteAPI, analyticsAPI } from '../utils/api';
 
 export default function Profile() {
   const [profile, setProfile] = useState({
+    firstName: '',
+    lastName: '',
     name: '',
     email: '',
     bio: '',
@@ -19,6 +21,7 @@ export default function Profile() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -27,28 +30,62 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Mock profile data
-      const mockProfile = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        bio: 'Senior Web Developer passionate about analytics and user experience',
-        company: 'Tech Corp Inc.',
-        location: 'San Francisco, CA',
-        website: 'https://johndoe.dev'
+      // Load real profile data
+      const profileResponse = await authAPI.getProfile();
+      
+      const realProfile = {
+        firstName: profileResponse.user.firstName || '',
+        lastName: profileResponse.user.lastName || '',
+        name: profileResponse.user.name || '',
+        email: profileResponse.user.email || '',
+        bio: profileResponse.user.bio || '',
+        company: profileResponse.user.company || '',
+        location: profileResponse.user.location || '',
+        website: profileResponse.user.website || ''
       };
 
-      const mockStats = {
-        totalWebsites: 5,
-        totalPageViews: 125000,
-        accountCreated: '2024-01-15',
-        lastLogin: new Date().toISOString()
-      };
+      setProfile(realProfile);
 
-      setProfile(mockProfile);
-      setStats(mockStats);
+      // Load user statistics
+      try {
+        const websitesResponse = await websiteAPI.getAll();
+        const userWebsites = websitesResponse.success ? websitesResponse.data : [];
+        
+        let totalPageViews = 0;
+        
+        // Aggregate page views from all websites
+        for (const website of userWebsites) {
+          try {
+            const overviewResponse = await analyticsAPI.getOverview(website.website_id, 30);
+            totalPageViews += overviewResponse.stats.totalPageViews || 0;
+          } catch (websiteError) {
+            console.warn(`Error loading analytics for website ${website.domain}:`, websiteError);
+          }
+        }
+
+        const realStats = {
+          totalWebsites: userWebsites.length,
+          totalPageViews,
+          accountCreated: profileResponse.user.createdAt || '',
+          lastLogin: new Date().toISOString()
+        };
+
+        setStats(realStats);
+      } catch (statsError) {
+        console.warn('Error loading user statistics:', statsError);
+        // Set basic stats without analytics data
+        setStats({
+          totalWebsites: 0,
+          totalPageViews: 0,
+          accountCreated: profileResponse.user.createdAt || '',
+          lastLogin: new Date().toISOString()
+        });
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
+      setError('Failed to load profile data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,10 +95,27 @@ export default function Profile() {
     e.preventDefault();
     try {
       setSaving(true);
-      // await authAPI.updateProfile(profile);
-      console.log('Profile updated:', profile);
+      setError('');
+      
+      const updateData = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        bio: profile.bio,
+        company: profile.company,
+        location: profile.location,
+        website: profile.website
+      };
+      
+      await authAPI.updateProfile(updateData);
+      
+      // Show success message
+      console.log('Profile updated successfully');
+      // Could add toast notification here
+      
     } catch (error) {
       console.error('Error updating profile:', error);
+      setError('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -94,6 +148,20 @@ export default function Profile() {
 
   return (
     <DashboardLayout title="Profile">
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fca5a5',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          marginBottom: '1rem',
+          color: '#dc2626'
+        }}>
+          {error}
+        </div>
+      )}
+      
       {/* Profile Header */}
       <div className="dashboard-card" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>

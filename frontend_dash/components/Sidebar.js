@@ -22,6 +22,12 @@ const Sidebar = () => {
       badge: null
     },
     {
+      name: 'Goals',
+      href: '/goals',
+      icon: '🎯',
+      badge: null
+    },
+    {
       name: 'Websites',
       href: '/websites',
       icon: '🌐',

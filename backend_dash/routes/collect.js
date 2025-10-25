@@ -95,6 +95,33 @@ router.post('/', [
     const event = new Event(eventData);
     await event.save();
 
+    // Check for goal completions
+    const Goal = require('../models/Goal');
+    try {
+      const completedGoals = await Goal.checkGoalCompletion(websiteId, eventData);
+      
+      // Record conversions for completed goals
+      for (const goal of completedGoals) {
+        await Goal.recordConversion({
+          goal_id: goal.id,
+          website_id: websiteId,
+          session_id: finalSessionId,
+          event_id: event._id.toString(),
+          user_agent: userAgent,
+          ip_address: ipAddress,
+          referrer: referrer || '',
+          page_url: sanitizedUrl,
+          conversion_value: goal.value || 0,
+          custom_data: customData || {}
+        });
+        
+        console.log(`✅ Goal conversion recorded: ${goal.name} (ID: ${goal.id})`);
+      }
+    } catch (goalError) {
+      console.error('Goal checking error:', goalError);
+      // Don't fail the event collection if goal checking fails
+    }
+
     res.status(201).json({
       message: 'Event collected successfully',
       eventId: event._id,
@@ -193,6 +220,39 @@ router.post('/batch', [
           eventId: eventDoc._id,
           sessionId: finalSessionId
         });
+
+        // Check if this event completes any goals
+        try {
+          const Goal = require('../models/Goal');
+          const completedGoals = await Goal.checkGoalCompletion(websiteId, {
+            eventType,
+            url: sanitizedUrl,
+            referrer,
+            duration,
+            customData
+          });
+
+          // Record conversions for completed goals
+          for (const goal of completedGoals) {
+            await Goal.recordConversion({
+              goal_id: goal.id,
+              website_id: websiteId,
+              session_id: finalSessionId,
+              event_id: eventDoc._id.toString(),
+              user_agent: userAgent,
+              ip_address: ipAddress,
+              referrer,
+              page_url: sanitizedUrl,
+              conversion_value: goal.value || 0,
+              custom_data: customData
+            });
+            
+            console.log(`🎯 Goal completed: ${goal.name} for website ${websiteId}`);
+          }
+        } catch (goalError) {
+          console.error('Goal completion check error:', goalError);
+          // Don't fail the event collection if goal checking fails
+        }
 
       } catch (error) {
         failedEvents.push({ eventData, error: error.message });

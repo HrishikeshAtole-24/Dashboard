@@ -138,6 +138,107 @@ export const analyticsAPI = {
     const response = await api.get(`/dashboard/${websiteId}/realtime`);
     return response.data;
   },
+
+  getReferrers: async (websiteId, days = 30, limit = 10) => {
+    const response = await api.get(`/dashboard/${websiteId}/referrers?days=${days}&limit=${limit}`);
+    return response.data;
+  },
+
+  getGeographic: async (websiteId, days = 30, limit = 10) => {
+    const response = await api.get(`/dashboard/${websiteId}/geographic?days=${days}&limit=${limit}`);
+    return response.data;
+  },
+
+  triggerAggregation: async (websiteId) => {
+    const response = await api.post(`/dashboard/${websiteId}/aggregate`);
+    return response.data;
+  },
+
+  getConversionRates: async (websiteId, options = {}) => {
+    const { startDate, endDate, goalId } = options;
+    let url = `/dashboard/analytics/conversion-rates?website_id=${websiteId}`;
+    
+    if (startDate) url += `&start_date=${startDate}`;
+    if (endDate) url += `&end_date=${endDate}`;
+    if (goalId) url += `&goal_id=${goalId}`;
+    
+    const response = await api.get(url);
+    return response.data;
+  },
+};
+
+// Goals API
+export const goalsAPI = {
+  // Initialize goals table
+  initialize: async () => {
+    const response = await api.get('/dashboard/goals/init');
+    return response.data;
+  },
+
+  // Create new goal
+  create: async (goalData) => {
+    const response = await api.post('/dashboard/goals', goalData);
+    return response.data;
+  },
+
+  // Get all goals for a website
+  getAll: async (websiteId) => {
+    const response = await api.get(`/dashboard/goals?website_id=${websiteId}`);
+    return response.data;
+  },
+
+  // Get specific goal
+  getById: async (goalId) => {
+    const response = await api.get(`/dashboard/goals/${goalId}`);
+    return response.data;
+  },
+
+  // Update goal
+  update: async (goalId, updateData) => {
+    const response = await api.put(`/dashboard/goals/${goalId}`, updateData);
+    return response.data;
+  },
+
+  // Delete goal
+  delete: async (goalId) => {
+    const response = await api.delete(`/dashboard/goals/${goalId}`);
+    return response.data;
+  },
+
+  // Get goal conversions
+  getConversions: async (goalId, options = {}) => {
+    const { startDate, endDate, limit, offset } = options;
+    let url = `/dashboard/goals/${goalId}/conversions`;
+    
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (limit) params.append('limit', limit.toString());
+    if (offset) params.append('offset', offset.toString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    const response = await api.get(url);
+    return response.data;
+  },
+
+  // Record manual conversion
+  recordConversion: async (goalId, conversionData) => {
+    const response = await api.post(`/dashboard/goals/${goalId}/conversions`, conversionData);
+    return response.data;
+  },
+
+  // Process goal completions (Global Analytics Feature)
+  processCompletions: async (websiteId = null) => {
+    let url = '/dashboard/goals/process-completions';
+    if (websiteId) {
+      url += `?website_id=${websiteId}`;
+    }
+    const response = await api.post(url);
+    return response.data;
+  },
 };
 
 // Database initialization API

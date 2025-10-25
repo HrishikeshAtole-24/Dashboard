@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', emoji: '📊' },
   { name: 'Analytics', href: '/analytics', emoji: '📈' },
+  { name: 'Goals', href: '/goals', emoji: '🎯' },
   { name: 'Websites', href: '/websites', emoji: '🌐' },
   { name: 'Real-time', href: '/realtime', emoji: '⚡', badge: 'LIVE' },
   { name: 'Profile', href: '/profile', emoji: '👤' },
